@@ -7,7 +7,24 @@ class MoviesController < ApplicationController
   end
 
   def index
-    @movies = Movie.all
+    @all_ratings = Movie.uniq.pluck(:rating)
+    
+    @sort = (params[:sort]) ? params[:sort] : session[:sort]
+    
+    if params[:ratings].nil?
+        @selected_ratings = session[:ratings].nil? ? Hash[@all_ratings.map { |x| [x,x] } ] : session[:ratings] ; flash.keep ; redirect_to movies_path(:sort => @sort, :ratings => @selected_ratings)
+    else
+        @selected_ratings = params[:ratings]
+    end
+        
+    @movies = Movie.where(:rating => @selected_ratings.keys).order(@sort)    
+    
+    session[:sort] = @sort
+    session[:ratings] = @selected_ratings
+    
+    @hilite_title = 'hilite' if (@sort == 'title')
+    @hilite_release = 'hilite' if (@sort == 'release_date')
+    
   end
 
   def new
